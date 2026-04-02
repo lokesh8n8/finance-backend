@@ -1,6 +1,6 @@
 # Finance Dashboard Backend
 
-A production-ready backend for a finance dashboard system built with Node.js, Express, PostgreSQL, and Prisma. Features role-based access control, JWT authentication, audit logging, soft deletes, and auto-generated Swagger documentation.
+A production-ready backend for a finance dashboard system built with Node.js, Express, PostgreSQL, and Prisma. Features role-based access control, JWT authentication, audit logging, soft deletes, search, rate limiting, and auto-generated Swagger documentation.
 
 ---
 
@@ -14,13 +14,14 @@ A production-ready backend for a finance dashboard system built with Node.js, Ex
 | ORM | Prisma 7 |
 | Auth | JWT + bcrypt |
 | Validation | Zod |
+| Rate Limiting | express-rate-limit |
 | Docs | Swagger UI (OpenAPI 3.0) |
 
 ---
 
 ## Project Structure
 
-```text
+```
 finance-backend/
 ├── src/
 │   ├── config/
@@ -105,7 +106,7 @@ npm run dev
 
 ### 7. Open Swagger docs
 
-```text
+```
 http://localhost:5000/api/docs
 ```
 
@@ -133,7 +134,7 @@ http://localhost:5000/api/docs
 | Method | Endpoint | Access | Description |
 |---|---|---|---|
 | POST | /api/records | Admin, Analyst | Create a financial record |
-| GET | /api/records | All roles | Get records with filters and pagination |
+| GET | /api/records | All roles | Get records with filters, search, and pagination |
 | GET | /api/records/:id | All roles | Get a record by ID |
 | PATCH | /api/records/:id | Admin, Analyst | Update a record |
 | DELETE | /api/records/:id | Admin | Soft delete a record |
@@ -148,12 +149,33 @@ http://localhost:5000/api/docs
 
 ---
 
+## Query Parameters — Records
+
+| Parameter | Type | Description | Example |
+|---|---|---|---|
+| type | string | Filter by INCOME or EXPENSE | ?type=INCOME |
+| category | string | Filter by category (case-insensitive) | ?category=salary |
+| search | string | Keyword search across category and notes | ?search=mumbai |
+| startDate | string | Filter records from this date (ISO 8601) | ?startDate=2026-01-01 |
+| endDate | string | Filter records up to this date (ISO 8601) | ?endDate=2026-03-31 |
+| page | integer | Page number for pagination | ?page=2 |
+| limit | integer | Number of records per page | ?limit=20 |
+
+Filters can be combined freely. Example:
+
+```
+GET /api/records?type=INCOME&search=freelance&startDate=2026-01-01&page=1&limit=10
+```
+
+---
+
 ## Role System
 
 | Permission | Viewer | Analyst | Admin |
 |---|---|---|---|
 | View own records | ✅ | ✅ | ✅ |
 | View all records | ❌ | ✅ | ✅ |
+| Search and filter records | ✅ | ✅ | ✅ |
 | Create records | ❌ | ✅ | ✅ |
 | Update own records | ❌ | ✅ | ✅ |
 | Update any record | ❌ | ❌ | ✅ |
@@ -162,6 +184,23 @@ http://localhost:5000/api/docs
 | View monthly trends | ❌ | ✅ | ✅ |
 | Manage users | ❌ | ❌ | ✅ |
 | View audit logs | ❌ | ❌ | ✅ |
+
+---
+
+## Rate Limiting
+
+Two rate limiters are applied to protect the API:
+
+| Limiter | Routes | Window | Max Requests |
+|---|---|---|---|
+| Global | All routes | 15 minutes | 100 requests |
+| Auth | /api/auth/login, /api/auth/register | 15 minutes | 10 requests |
+
+When a limit is exceeded the API returns:
+
+```json
+{ "success": false, "error": "Too many requests, please try again later." }
+```
 
 ---
 
@@ -182,12 +221,20 @@ Dashboard endpoints return different data depending on the caller's role. Viewer
 ### Centralized Error Handling
 All errors flow through a single Express error handler. Zod validation errors, Prisma errors, and custom application errors are all normalized into the same response shape, making frontend error handling predictable.
 
+### Keyword Search
+Search runs across the `category` and `notes` fields using a case-insensitive contains query. It can be combined freely with other filters like type and date range, giving the frontend flexible querying without multiple round trips.
+
+### Rate Limiting Strategy
+A global limiter protects all routes from abuse. A stricter limiter on auth endpoints specifically prevents brute force attacks on login and registration. Both return standard rate limit headers so clients can handle backoff gracefully.
+
 ### Consistent Response Shape
 Every API response follows the same structure:
+
 ```json
 { "success": true, "message": "...", "data": {} }
 { "success": false, "error": "...", "details": [] }
 ```
+
 This makes frontend integration straightforward — every component checks `success` first.
 
 ---
@@ -200,6 +247,7 @@ This makes frontend integration straightforward — every component checks `succ
 - **Analysts can create and update their own records** — this felt like the most practical interpretation of an analyst role in a finance dashboard context.
 - **Soft deletes on records only** — users are hard deleted since user data does not carry the same compliance requirements as financial records in this context.
 - **In-memory grouping for trends** — monthly trend aggregation is done in JavaScript rather than SQL for readability and portability across databases.
+- **Search on category and notes only** — amount and date are better served by their dedicated filter parameters, so keyword search focuses on descriptive text fields where free-form queries make the most sense.
 
 ---
 
