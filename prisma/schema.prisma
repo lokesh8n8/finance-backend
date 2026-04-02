@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  VIEWER
+  ANALYST
+  ADMIN
+}
+
+enum RecordType {
+  INCOME
+  EXPENSE
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(VIEWER)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  records   FinancialRecord[]
+  auditLogs AuditLog[]
+}
+
+model FinancialRecord {
+  id          String     @id @default(uuid())
+  amount      Float
+  type        RecordType
+  category    String
+  date        DateTime
+  notes       String?
+  deletedAt   DateTime?
+
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  createdById String
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AuditLog {
+  id            String      @id @default(uuid())
+  action        AuditAction
+  entity        String
+  entityId      String
+  changes       Json?
+  performedBy   User        @relation(fields: [performedById], references: [id])
+  performedById String
+  createdAt     DateTime    @default(now())
+}
