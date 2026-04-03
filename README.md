@@ -176,12 +176,10 @@ GET /api/records?type=INCOME&search=freelance&startDate=2026-01-01&page=1&limit=
 | View own records | ✅ | ✅ | ✅ |
 | View all records | ❌ | ✅ | ✅ |
 | Search and filter records | ✅ | ✅ | ✅ |
-| Create records | ❌ | ✅ | ✅ |
-| Update own records | ❌ | ✅ | ✅ |
-| Update any record | ❌ | ❌ | ✅ |
+| Access insights and trends | ❌ | ✅ | ✅ |
+| Create records | ❌ | ❌ | ✅ |
+| Update records | ❌ | ❌ | ✅ |
 | Delete records | ❌ | ❌ | ✅ |
-| View category breakdown | ❌ | ✅ | ✅ |
-| View monthly trends | ❌ | ✅ | ✅ |
 | Manage users | ❌ | ❌ | ✅ |
 | View audit logs | ❌ | ❌ | ✅ |
 

@@ -106,16 +106,8 @@ const updateRecord = async (id, data, userRole, userId) => {
     throw error
   }
 
-  // Viewers cannot update
-  if (userRole === 'VIEWER') {
-    const error = new Error('Forbidden — insufficient permissions')
-    error.statusCode = 403
-    throw error
-  }
-
-  // Analysts can only update their own records
-  if (userRole === 'ANALYST' && existing.createdById !== userId) {
-    const error = new Error('Forbidden — you can only update your own records')
+  if (userRole !== 'ADMIN') {
+    const error = new Error('Forbidden — only admins can update records')
     error.statusCode = 403
     throw error
   }

@@ -45,7 +45,7 @@ const roleGuard = require("../../middleware/roleGuard");
 router.post(
   "/",
   authenticate,
-  roleGuard("ADMIN", "ANALYST"),
+  roleGuard("ADMIN"),
   controller.createRecord,
 );
 
@@ -161,7 +161,7 @@ router.get(
 router.patch(
   "/:id",
   authenticate,
-  roleGuard("ADMIN", "ANALYST"),
+  roleGuard("ADMIN"),
   controller.updateRecord,
 );
 
