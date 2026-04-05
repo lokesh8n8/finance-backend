@@ -8,7 +8,10 @@ const options = {
       version: '1.0.0',
       description: 'Backend API for Finance Dashboard with role-based access control',
     },
-    servers: [{ url: 'http://localhost:5000' }],
+     servers: [
+  { url: 'http://localhost:5000', description: 'Local' },
+  { url: 'https://finance-backend-production-1521.up.railway.app', description: 'Production' },
+],
     components: {
       securitySchemes: {
         bearerAuth: {
